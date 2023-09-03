@@ -213,6 +213,42 @@ class CalculateAndUpdateMovingAverages extends Command
     {
         $spreadsheetId = config('app.google_sheets.spreadsheet_id');
         $response = $this->getSheetsService()->spreadsheets_values->get($spreadsheetId, $sheetName . '!A:B');
-        return $response->getValues();
+        $values = $response->getValues();
+        if ($this->validateValues($values)) {
+            return $values;
+        } else {
+            throw new \Exception('Invalid Data.');
+        }
+    }
+
+    /**
+     * @param $values
+     * @return bool
+     */
+    public function validateValues($values): bool
+    {
+        if (empty($values)) {
+            return false;
+        }
+
+        $headers = $values[0];
+        if (array_search("Date", $headers) === false || array_search("Visitors", $headers) === false) {
+            return false;
+        }
+        for ($i = 1; $i < count($values); $i++) {
+            if (count($values[$i]) != 2) {
+                return false;
+            }
+            if (!is_numeric($values[$i][array_search("Visitors", $headers)]) || $values[$i][array_search("Visitors", $headers)] < 0) {
+                return false;
+            }
+            if (!strtotime($values[$i][array_search("Date", $headers)]) || strtotime($values[$i][array_search("Date", $headers)]) > time()) {
+                return false;
+            }
+            if ($i > 1 && strtotime($values[$i][array_search("Date", $headers)]) < strtotime($values[$i - 1][array_search("Date", $headers)])) {
+                return false;
+            }
+        }
+        return true;
     }
 }
