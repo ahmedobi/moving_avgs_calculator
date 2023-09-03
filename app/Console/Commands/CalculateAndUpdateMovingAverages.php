@@ -232,20 +232,27 @@ class CalculateAndUpdateMovingAverages extends Command
         }
 
         $headers = $values[0];
-        if (array_search("Date", $headers) === false || array_search("Visitors", $headers) === false) {
+        $dateColumnIndex = array_search("Date", $headers);
+        $visitorsColumnIndex = array_search("Visitors", $headers);
+
+        if ($dateColumnIndex === false || $visitorsColumnIndex === false) {
             return false;
         }
+
         for ($i = 1; $i < count($values); $i++) {
             if (count($values[$i]) != 2) {
                 return false;
             }
-            if (!is_numeric($values[$i][array_search("Visitors", $headers)]) || $values[$i][array_search("Visitors", $headers)] < 0) {
+            if (!is_numeric($values[$i][$visitorsColumnIndex]) || $values[$i][$visitorsColumnIndex] < 0) {
                 return false;
             }
-            if (!strtotime($values[$i][array_search("Date", $headers)]) || strtotime($values[$i][array_search("Date", $headers)]) > time()) {
+            if (!strtotime($values[$i][$dateColumnIndex]) || strtotime($values[$i][$dateColumnIndex]) > time()) {
                 return false;
             }
-            if ($i > 1 && strtotime($values[$i][array_search("Date", $headers)]) < strtotime($values[$i - 1][array_search("Date", $headers)])) {
+            if ($i > 1 && strtotime($values[$i][$dateColumnIndex]) < strtotime($values[$i - 1][$dateColumnIndex])) {
+                return false;
+            }
+            if ($i > 1 && strtotime($values[$i][$dateColumnIndex]) - strtotime($values[$i - 1][$dateColumnIndex]) != 86400) {
                 return false;
             }
         }
