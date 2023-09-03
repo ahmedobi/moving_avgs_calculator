@@ -14,7 +14,14 @@ class CalculateAndUpdateMovingAverages extends Command
     protected $signature = 'calculate:moving-visitors-averages {--sheetName=} {--windowSize=}';
     protected $description = 'Calculate moving averages and update the "Moving Average" column in Google Sheets';
 
+    /**
+     * @var Google_Client
+     */
     protected $client;
+
+    /**
+     * @var Google_Service_Sheets
+     */
     protected $sheetsService;
 
     /**
@@ -44,11 +51,26 @@ class CalculateAndUpdateMovingAverages extends Command
     }
 
     /**
+     * Description:
+     * This command for calculating moving averages and updating the "Moving Average" column in Google Sheets.
+     *
+     * Usage:
+     * php artisan calculate:moving-visitors-averages {--sheetName=} {--windowSize=}
+     *
+     * Options:
+     *  --help  Display this help message
+     *  --sheetName  The name of the sheet in Google Sheets, default value is "Sheet1"
+     *  --windowSize  The window size for calculating moving averages, default value is the number of rows in the sheet
+     *
+     * Examples:
+     * Php artisan calculate:moving-visitors-averages --sheetName=moving_average --windowSize=3
+     *
      * @return void
      */
     public function handle(): void
     {
         try {
+            $this->info('Starting to calculate moving averages...');
 
             $spreadsheetId = config('app.google_sheets.spreadsheet_id');
             $sheetName = $this->getSheetName();
@@ -57,13 +79,13 @@ class CalculateAndUpdateMovingAverages extends Command
                 throw new \Exception('Sheet with name "' . $sheetName . '" does not exist.');
             }
 
-            $response = $this->getSheetsService()->spreadsheets_values->get($spreadsheetId, $sheetName . '!A:B');
-            $values = $response->getValues();
+            $values = $this->getSheetData($sheetName);
 
             $windowSize = $this->getWindowSize(count($values));
             $movingAverages = $this->calculateMovingAverages($values, $windowSize);
 
             $this->updateMovingAverages($this->getSheetsService(), $spreadsheetId, $sheetName, $windowSize, $values, $movingAverages);
+
             $this->info('Moving averages calculated and updated successfully.');
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
@@ -182,5 +204,15 @@ class CalculateAndUpdateMovingAverages extends Command
             $movingAverages[] = [$movingAverage];
         }
         return $movingAverages;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getSheetData($sheetName): array
+    {
+        $spreadsheetId = config('app.google_sheets.spreadsheet_id');
+        $response = $this->getSheetsService()->spreadsheets_values->get($spreadsheetId, $sheetName . '!A:B');
+        return $response->getValues();
     }
 }
