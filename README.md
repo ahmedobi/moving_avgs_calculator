@@ -23,9 +23,5 @@ To get started, follow these steps:
 - In the command line, you can run the following command to calculate the moving average for the last 5 days, considering you will use a custom sheet name:
 `php artisan calculate:moving-visitors-averages --windowSize=5 --sheetName=dummy-moving-avg-sheet`
 
-- In the command line, you can run the following command to calculate the moving average for whole sheet, considering you will use the default sheet name:
+- In the command line, you can run the following command to calculate the moving average for the whole sheet, considering you will use the default sheet name:
 `php artisan calculate:moving-visitors-averages`
-
-## License
-
-This project is open-source and available under the [MIT License](LICENSE).
